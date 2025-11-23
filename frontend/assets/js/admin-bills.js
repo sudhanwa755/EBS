@@ -133,7 +133,7 @@ const renderBills = (bills) => {
                 </td>
                 <td class="px-6 py-4">
                     <button onclick="updateBillStatus('${bill.id}', '${bill.status === 'Paid' ? 'Pending' : 'Paid'}')"
-                        class="px-3 py-1 rounded-lg text-xs font-medium ${bill.status === 'Paid' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'} transition-colors">
+                        class="px-3 py-1 rounded-full text-xs font-medium ${bill.status === 'Paid' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'} transition-colors">
                         ${bill.status === 'Paid' ? 'Mark Pending' : 'Mark Paid'}
                     </button>
                 </td>
@@ -203,3 +203,4 @@ window.updateBillStatus = async (billId, newStatus) => {
 
 // Initialize
 loadBills();
+
