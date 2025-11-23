@@ -1,0 +1,1228 @@
+================================================================================
+                    ELECTRICITY BILLING SYSTEM (EBS)
+                         PROJECT DOCUMENTATION
+================================================================================
+
+Version: 1.0
+Last Updated: November 23, 2025
+Status: Production Ready
+Tech Stack: HTML, CSS, JavaScript, Supabase (PostgreSQL)
+
+================================================================================
+                         TABLE OF CONTENTS
+================================================================================
+
+1. PROJECT OVERVIEW
+2. FEATURES & FUNCTIONALITY
+3. TECHNOLOGY STACK
+4. DATABASE ARCHITECTURE
+5. FILE STRUCTURE
+6. USER ROLES & PERMISSIONS
+7. SETUP & DEPLOYMENT
+8. IMPLEMENTATION DETAILS
+9. SECURITY & AUTHENTICATION
+10. IMPORTANT NOTES & MAINTENANCE
+
+================================================================================
+                        1. PROJECT OVERVIEW
+================================================================================
+
+ElectroBill is a modern, full-featured electricity billing management system
+designed for both customers and administrators. It provides real-time bill
+tracking, payment processing, consumption monitoring, and administrative
+tools for user and tariff management.
+
+KEY HIGHLIGHTS:
+- Full-stack web application
+- Real-time data with Supabase backend
+- Role-based access control (Admin/User)
+- Responsive design (mobile, tablet, desktop)
+- Dark mode support
+- Auto-generated meter numbers
+- PDF bill downloads with real customer data
+- Secure authentication & authorization
+
+================================================================================
+                    2. FEATURES & FUNCTIONALITY
+================================================================================
+
+CUSTOMER FEATURES:
+--------------------------------------------------------------------------------
+
+✅ User Registration & Login
+   - Email/password authentication via Supabase Auth
+   - Auto-generated unique meter numbers (MTR-XXXXXX format)
+   - Success modal showing meter number after registration
+   - Automatic redirect to login page
+
+✅ Dashboard
+   - Current month consumption overview
+   - Pending bill alerts
+   - Quick payment access
+   - Consumption chart visualization
+   - Recent bills summary
+
+✅ Bill Management
+   - View all bills with filters (Paid/Pending)
+   - Search bills by month, ID, or amount
+   - Download bills as PDF directly from list
+   - Real customer data in PDFs (not dummy data!)
+   - Detailed bill breakdown (units, charges, taxes)
+
+✅ Profile Management
+   - Update personal information
+   - Manage contact details (mobile, phone)
+   - Update address (street, city, state, postal code, country)
+   - View auto-assigned meter number (read-only)
+   - Change password
+   - Theme toggle (light/dark mode)
+
+✅ Payment Processing
+   - Online bill payment interface
+   - Payment confirmation
+   - Payment history tracking
+   - Due date reminders
+
+ADMIN FEATURES:
+--------------------------------------------------------------------------------
+
+✅ Admin Dashboard
+   - Total users count
+   - Total revenue statistics
+   - Pending bills overview
+   - System analytics
+   - Monthly trends
+
+✅ User Management (manage-users.html)
+   - View all registered users
+   - Search and filter users
+   - Activate/deactivate accounts (toggle status)
+   - View user details (ID, name, email, role, status)
+   - Track user consumption
+   - User status management (active/inactive)
+
+✅ Bill Management (bills.html)
+   - View all customer bills
+   - Filter by status (Paid/Pending)
+   - Search by customer or bill ID
+   - Update bill status
+   - Delete bills
+   - View bill details with customer information
+
+✅ Meter Reading Entry (add-reading.html)
+   - Add new meter readings for any customer
+   - Select customer from dropdown list
+   - Enter previous and current meter readings
+   - Auto-calculate units consumed (current - previous)
+   - Set reading month and billing month
+   - Automatic bill generation with tiered pricing
+   - Fetches active tariff plan for calculation
+   - Creates/updates both consumption and bills tables
+   - Prevents duplicate readings (with overwrite option)
+   - Due date auto-set to 15th of next month
+
+✅ Tariff Management (tariffs.html)
+   - Create/update tiered tariff plans
+   - Three-tier pricing structure:
+     * Tier 1: 0-100 units (configurable rate)
+     * Tier 2: 101-300 units (configurable rate)
+     * Tier 3: 300+ units (configurable rate)
+   - Set base fee (fixed monthly charge)
+   - Configure effective dates
+   - Category support (residential/commercial/industrial/agricultural)
+   - Tax percentage and fuel surcharge options
+   - Activate/deactivate tariff plans
+   - Update existing "Standard Residential Tariff"
+
+✅ Reports & Analytics (reports.html)
+   - Revenue Reports:
+     * Monthly revenue aggregation
+     * Total units consumed per month
+     * Fixed charges breakdown
+     * Export as CSV or PDF
+   
+   - Outstanding Bills Report:
+     * All pending/unpaid bills
+     * Customer details with meter numbers
+     * Due dates and amounts
+     * Export as CSV or PDF
+   
+   - User Activity Report:
+     * All registered users
+     * Account status (active/inactive)
+     * Export as CSV or PDF
+   
+   - All Readings Report:
+     * Complete meter reading history
+     * Previous and current readings
+     * Units consumed per month
+     * Export as CSV or PDF
+   
+   - Export Formats:
+     * PDF: Professional formatted reports with html2pdf.js
+     * CSV: Excel-compatible comma-separated values
+     * Automatic fallback to JSON if PDF fails
+
+================================================================================
+                      3. TECHNOLOGY STACK
+================================================================================
+
+FRONTEND:
+--------------------------------------------------------------------------------
+- HTML5 (Structure)
+- Tailwind CSS (Styling via CDN)
+- JavaScript ES6+ (Logic & Interactivity)
+- No frontend framework (Vanilla JS for simplicity)
+- Responsive design (mobile-first approach)
+
+BACKEND & DATABASE:
+--------------------------------------------------------------------------------
+- Supabase (Backend as a Service)
+- PostgreSQL (Database)
+- Supabase Auth (Authentication)
+- Row-Level Security (RLS) for data access control
+- Real-time capabilities (optional, ready for future use)
+
+LIBRARIES & SERVICES:
+--------------------------------------------------------------------------------
+- html2pdf.js (PDF generation from HTML)
+- Supabase JavaScript Client (@supabase/supabase-js)
+- Google Fonts (Inter, Poppins)
+
+DEVELOPMENT TOOLS:
+--------------------------------------------------------------------------------
+- Live Server (Development server)
+- VS Code (Recommended IDE)
+- Git (Version control)
+
+================================================================================
+                     4. DATABASE ARCHITECTURE
+================================================================================
+
+DATABASE: PostgreSQL via Supabase
+
+TABLES (8 Core Tables):
+--------------------------------------------------------------------------------
+
+1. profiles
+   Purpose: User account information with enhanced fields
+   Columns:
+   - id (UUID, Primary Key, references auth.users ON DELETE CASCADE)
+   - email (TEXT, UNIQUE, NOT NULL)
+   - name (TEXT)
+   - role (TEXT, NOT NULL, DEFAULT 'USER', CHECK: 'USER' or 'ADMIN')
+   - status (TEXT, NOT NULL, DEFAULT 'active', CHECK: 'active' or 'inactive')
+   - customer_category (TEXT, DEFAULT 'residential', CHECK: residential/commercial/industrial/agricultural)
+   - kyc_verified (BOOLEAN, DEFAULT FALSE)
+   - account_status (TEXT, DEFAULT 'active', CHECK: active/inactive/suspended/closed)
+   - last_login (TIMESTAMPTZ)
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   
+   Security: RLS enabled
+   - Users can view/update only their own profile
+   - Admins can view all profiles using is_admin() function
+   - Trigger: handle_new_user() creates profile on auth.users insert
+
+2. customer_info
+   Purpose: Extended customer details, meter & connection information
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, UNIQUE, Foreign Key → profiles.id ON DELETE CASCADE)
+   
+   Contact Information:
+   - mobile_number (TEXT)
+   - phone_number (TEXT)
+   
+   Address Details:
+   - street_address (TEXT)
+   - city (TEXT)
+   - state_province (TEXT)
+   - postal_code (TEXT)
+   - country (TEXT)
+   
+   Meter & Connection:
+   - meter_number (TEXT, UNIQUE) - Auto-generated format: MTR-XXXXXX
+   - connection_id (TEXT, UNIQUE)
+   - connection_date (DATE)
+   
+   Account Preferences:
+   - billing_frequency (TEXT, DEFAULT 'monthly', CHECK: monthly/quarterly/annual)
+   - preferred_language (TEXT, DEFAULT 'en', CHECK: en/es/fr/hi)
+   - notification_email (BOOLEAN, DEFAULT TRUE)
+   - notification_sms (BOOLEAN, DEFAULT FALSE)
+   - notification_push (BOOLEAN, DEFAULT FALSE)
+   
+   KYC & Verification:
+   - id_type (TEXT, CHECK: passport/driver_license/national_id/voter_id)
+   - id_number (TEXT)
+   - id_verified (BOOLEAN, DEFAULT FALSE)
+   
+   Metadata:
+   - notes (TEXT)
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   
+   Security: RLS enabled
+   - Users can view/update only their own info
+   - Admins can view/update all customer info
+
+3. bills
+   Purpose: Electricity bills for customers
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, Foreign Key → profiles.id ON DELETE CASCADE)
+   - month (TEXT, NOT NULL) - e.g., "2025-01" or "January 2025"
+   - units (NUMERIC(10,2), NOT NULL, CHECK >= 0) - kWh consumed
+   - amount (NUMERIC(10,2), NOT NULL, CHECK >= 0) - Total bill amount
+   - due_date (DATE, NOT NULL)
+   - status (TEXT, NOT NULL, DEFAULT 'Pending', CHECK: 'Pending' or 'Paid')
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   - UNIQUE(user_id, month) - One bill per user per month
+   
+   Security: RLS enabled
+   - Users can view only their own bills
+   - Admins can view/insert/update/delete all bills
+
+4. consumption
+   Purpose: Meter reading records and consumption tracking
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, Foreign Key → profiles.id ON DELETE CASCADE)
+   - month (TEXT, NOT NULL) - Reading month
+   - billing_month (TEXT) - Billing period (nullable)
+   - units (NUMERIC(10,2), NOT NULL, CHECK >= 0) - Current meter reading
+   - units_consumed (NUMERIC(10,2)) - Calculated consumption (nullable)
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - UNIQUE(user_id, month) - One reading per user per month
+   
+   Security: RLS enabled
+   - Users can view only their own consumption
+   - Admins can view/insert/update/delete all consumption records
+
+5. tariff_plans
+   Purpose: Tiered electricity rate plans with taxes and surcharges
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - name (TEXT, NOT NULL, UNIQUE)
+   - description (TEXT)
+   - category (TEXT, NOT NULL, CHECK: residential/commercial/industrial/agricultural)
+   
+   Tariff Structure:
+   - base_fee (NUMERIC(10,2), NOT NULL, CHECK >= 0) - Fixed monthly charge
+   
+   Tiered Pricing:
+   - tier1_units_up_to (NUMERIC(10,2)) - e.g., 100 kWh
+   - tier1_rate (NUMERIC(10,4), NOT NULL, CHECK >= 0) - Rate per unit for tier 1
+   - tier2_units_up_to (NUMERIC(10,2)) - e.g., 300 kWh
+   - tier2_rate (NUMERIC(10,4)) - Rate per unit for tier 2
+   - tier3_units_up_to (NUMERIC(10,2)) - Unlimited if NULL
+   - tier3_rate (NUMERIC(10,4)) - Rate per unit for tier 3
+   
+   Taxes & Surcharges:
+   - tax_percentage (NUMERIC(5,2), DEFAULT 0, CHECK >= 0)
+   - fuel_surcharge (NUMERIC(10,4), DEFAULT 0)
+   
+   Validity:
+   - is_active (BOOLEAN, DEFAULT TRUE)
+   - effective_from (DATE, NOT NULL)
+   - effective_until (DATE)
+   
+   Timestamps:
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   
+   Security: RLS enabled
+   - Everyone can view active tariffs
+   - Only admins can create/update/delete tariffs
+
+6. customer_tariff_mapping
+   Purpose: Track tariff assignments to customers over time
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, Foreign Key → profiles.id ON DELETE CASCADE)
+   - tariff_id (UUID, NOT NULL, Foreign Key → tariff_plans.id)
+   - assigned_date (DATE, NOT NULL, DEFAULT CURRENT_DATE)
+   - changed_reason (TEXT)
+   - is_active (BOOLEAN, DEFAULT TRUE)
+   - superseded_date (DATE)
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   - UNIQUE(user_id, assigned_date)
+   
+   Security: RLS enabled
+   - Users can view their own tariff assignments
+   - Admins can manage all tariff mappings
+
+7. consumption_limits
+   Purpose: User-defined consumption alerts and limits
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, UNIQUE, Foreign Key → profiles.id ON DELETE CASCADE)
+   - monthly_limit (NUMERIC(10,2), NOT NULL, CHECK > 0) - kWh limit
+   - alert_threshold (NUMERIC(5,2), NOT NULL, CHECK BETWEEN 50 AND 100) - Percentage
+   
+   Alert Preferences:
+   - email_alert (BOOLEAN, DEFAULT TRUE)
+   - sms_alert_enabled (BOOLEAN, DEFAULT FALSE)
+   - push_notification_enabled (BOOLEAN, DEFAULT FALSE)
+   
+   Status:
+   - is_active (BOOLEAN, DEFAULT TRUE)
+   - last_exceeded_month (TEXT)
+   
+   Timestamps:
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   - updated_at (TIMESTAMPTZ, DEFAULT NOW())
+   
+   Security: RLS enabled
+   - Users can manage only their own limits (full CRUD)
+   - Admins can view all limits
+
+8. consumption_alerts
+   Purpose: Audit trail for consumption limit alerts
+   Columns:
+   - id (UUID, Primary Key, DEFAULT uuid_generate_v4())
+   - user_id (UUID, NOT NULL, Foreign Key → profiles.id ON DELETE CASCADE)
+   - consumption_limit_id (UUID, NOT NULL, Foreign Key → consumption_limits.id ON DELETE CASCADE)
+   
+   Alert Details:
+   - alert_type (TEXT, NOT NULL, CHECK: 'warning' or 'exceeded')
+   - month (TEXT, NOT NULL)
+   - current_consumption (NUMERIC(10,2), NOT NULL)
+   - limit_units (NUMERIC(10,2), NOT NULL)
+   - percentage_used (NUMERIC(5,2), NOT NULL)
+   
+   Notification Status:
+   - email_sent (BOOLEAN, DEFAULT FALSE)
+   - sms_sent (BOOLEAN, DEFAULT FALSE)
+   - push_sent (BOOLEAN, DEFAULT FALSE)
+   - email_sent_at (TIMESTAMPTZ)
+   
+   Resolution:
+   - acknowledged_at (TIMESTAMPTZ)
+   - notes (TEXT)
+   
+   Timestamp:
+   - created_at (TIMESTAMPTZ, DEFAULT NOW())
+   
+   Security: RLS enabled
+   - Users can view/update their own alerts
+   - Admins can view/insert/manage all alerts
+
+DATABASE FEATURES & BACKEND LOGIC:
+--------------------------------------------------------------------------------
+✅ Row-Level Security (RLS) on all 8 tables
+✅ SECURITY DEFINER function is_admin() - prevents infinite recursion in RLS
+✅ Automatic timestamps via update_updated_at_column() trigger
+✅ Foreign key constraints with ON DELETE CASCADE
+✅ Unique constraints (email, meter_number, connection_id)
+✅ CHECK constraints for data validation
+✅ Indexes on frequently queried columns (user_id, status, month, etc.)
+✅ Trigger: handle_new_user() - auto-creates profile on auth.users insert
+✅ UUID extension enabled (uuid-ossp)
+
+CRITICAL BACKEND LOGIC:
+--------------------------------------------------------------------------------
+
+1. Meter Number Generation (api.js):
+   - Format: MTR-XXXXXX (zero-padded 6 digits)
+   - Auto-incremented from highest existing number
+   - Generated via API.user.generateUniqueMeterNumber()
+   - Stored in customer_info.meter_number (UNIQUE constraint)
+   - Cannot be changed after assignment
+
+2. Bill Calculation (admin-add-reading.js):
+   - Fetches active tariff plan from tariff_plans
+   - Applies tiered pricing:
+     * Tier 1: 0-100 units at tier1_rate
+     * Tier 2: 101-300 units at tier2_rate
+     * Tier 3: 300+ units at tier3_rate
+   - Adds base_fee (fixed monthly charge)
+   - Formula: Total = base_fee + (tier1_units × tier1_rate) + (tier2_units × tier2_rate) + ...
+   - Automatically creates/updates bills table entry
+   - Due date: 15th of next month
+
+3. PDF Generation (bills.js):
+   - Uses html2pdf.js library
+   - Fetches real customer data from customer_info table
+   - Includes: street_address, city, state_province, postal_code, country, meter_number
+   - NO dummy data - all fields populated from database
+   - Professional formatting with company branding
+   - Downloads as bill-{billId}.pdf
+
+4. Consumption Tracking:
+   - Admin enters previous and current meter readings
+   - System calculates: units_consumed = current - previous
+   - Stores in consumption table with month and billing_month
+   - Linked to bills via user_id and month
+
+5. RLS Security Implementation:
+   - is_admin() function uses SECURITY DEFINER to bypass RLS
+   - All policies use is_admin() instead of direct EXISTS queries
+   - Prevents "infinite recursion detected in policy" errors
+   - Users isolated to their own data via auth.uid() = user_id
+   - Admins have full access via is_admin() = TRUE
+
+INDEXES (Performance Optimization):
+--------------------------------------------------------------------------------
+✅ idx_profiles_email, idx_profiles_role
+✅ idx_bills_user_id, idx_bills_status, idx_bills_due_date, idx_bills_month
+✅ idx_consumption_user_id, idx_consumption_month
+✅ idx_customer_info_user_id, idx_customer_info_meter_number, idx_customer_info_city
+✅ idx_tariff_plans_active, idx_tariff_plans_category
+✅ idx_customer_tariff_user_id, idx_customer_tariff_tariff_id, idx_customer_tariff_is_active
+✅ idx_consumption_limits_user_id
+✅ idx_consumption_alerts_user_id, idx_consumption_alerts_month, idx_consumption_alerts_type
+
+================================================================================
+                       5. FILE STRUCTURE
+================================================================================
+
+PROJECT ROOT:
+c:\Users\sudhanwa\Documents\Projects trial versions\EBS\
+
+STRUCTURE:
+--------------------------------------------------------------------------------
+
+EBS/
+├── clean-setup-FIXED.sql           [Database schema - PRODUCTION]
+├── PROJECT_INFO.txt                [This file - Complete documentation]
+│
+└── frontend/                       [Web application files]
+    │
+    ├── index.html                  [Landing page]
+    ├── login.html                  [Login page]
+    ├── register.html               [Registration page with meter number modal]
+    ├── dashboard.html              [User dashboard]
+    ├── my-bills.html               [Bills list with download buttons]
+    ├── payment.html                [Payment processing page]
+    ├── profile.html                [User profile management]
+    ├── README.md                   [Project README]
+    │
+    ├── admin/                      [Admin-only pages]
+    │   ├── dashboard.html          [Admin dashboard]
+    │   ├── manage-users.html       [User management]
+    │   ├── bills.html              [Bill management]
+    │   ├── add-reading.html        [Meter reading entry]
+    │   ├── tariffs.html            [Tariff management]
+    │   └── reports.html            [Reports & analytics]
+    │
+    └── assets/                     [Static assets]
+        ├── css/
+        │   └── main.css            [Global styles]
+        │
+        ├── js/                     [JavaScript modules]
+        │   ├── config.js           [Supabase configuration]
+        │   ├── supabase.js         [Supabase client initialization]
+        │   ├── auth.js             [Authentication logic]
+        │   ├── api.js              [API methods for database operations]
+        │   ├── utils.js            [Utility functions]
+        │   ├── dashboard.js        [Dashboard logic]
+        │   ├── bills.js            [Bills page logic + PDF generation]
+        │   ├── profile.js          [Profile management]
+        │   ├── payment.js          [Payment processing]
+        │   ├── admin.js            [Admin common logic]
+        │   ├── admin-users.js      [User management logic]
+        │   ├── admin-bills.js      [Admin bill management]
+        │   ├── admin-add-reading.js [Meter reading entry]
+        │   ├── admin-tariffs.js    [Tariff management]
+        │   ├── admin-reports.js    [Reports generation]
+        │   └── admin-analytics.js  [Analytics calculations]
+        │
+        └── images/                 [Image assets - if any]
+
+IMPORTANT FILES (MUST CONFIGURE):
+--------------------------------------------------------------------------------
+1. frontend/assets/js/config.js
+   → Contains Supabase URL and API key
+   → MUST be updated with YOUR Supabase credentials
+
+2. clean-setup-FIXED.sql
+   → Complete database schema
+   → Run in Supabase SQL Editor to setup tables
+
+================================================================================
+                    6. USER ROLES & PERMISSIONS
+================================================================================
+
+ROLE: USER (Customer)
+--------------------------------------------------------------------------------
+Access:
+✅ Dashboard (own data)
+✅ My Bills (own bills only)
+✅ Profile (own profile)
+✅ Payment (own bills)
+✅ Download PDFs (own bills)
+
+Restrictions:
+❌ Cannot access admin pages
+❌ Cannot view other users' data
+❌ Cannot create/edit tariffs
+❌ Cannot add meter readings
+
+ROLE: ADMIN
+--------------------------------------------------------------------------------
+Access:
+✅ Admin Dashboard (system overview)
+✅ Manage Users (all users)
+✅ Manage Bills (all bills)
+✅ Add Meter Readings (create bills)
+✅ Manage Tariffs (create/edit rates)
+✅ Reports & Analytics (system-wide)
+
+Special Permissions:
+✅ View all customer data (via RLS policies)
+✅ Create bills for customers
+✅ Activate/deactivate users
+✅ Modify tariff rates
+✅ Access system analytics
+
+
+================================================================================
+                      7. SETUP & DEPLOYMENT
+================================================================================
+
+STEP 1: SUPABASE SETUP (15 minutes)
+--------------------------------------------------------------------------------
+
+1. Create Supabase Account
+   → Go to https://supabase.com
+   → Sign up for free account
+   → Create new project
+
+2. Get Credentials
+   → Project Settings → API
+   → Copy "Project URL"
+   → Copy "anon/public" API Key
+
+3. Setup Database
+   → Open SQL Editor in Supabase
+   → Open file: clean-setup-FIXED.sql
+   → Copy entire content
+   → Paste into SQL Editor
+   → Click "Run"
+   → Wait for "Setup Complete!" message
+
+4. Verify Tables
+   → Go to Table Editor
+   → Should see: profiles, customer_info, bills, tariffs, consumption_limits
+
+STEP 2: CONFIGURE APPLICATION (5 minutes)
+--------------------------------------------------------------------------------
+
+1. Open file: frontend/assets/js/config.js
+
+2. Update with YOUR Supabase credentials:
+
+   export const CONFIG = {
+       SUPABASE_URL: 'YOUR_PROJECT_URL_HERE',
+       SUPABASE_ANON_KEY: 'YOUR_ANON_KEY_HERE'
+   };
+
+3. Save file
+
+STEP 3: RUN APPLICATION (2 minutes)
+--------------------------------------------------------------------------------
+
+Option A: Using Live Server (VS Code)
+1. Install "Live Server" extension in VS Code
+2. Right-click on frontend/index.html
+3. Select "Open with Live Server"
+4. Application opens at http://127.0.0.1:5500/frontend/
+
+Option B: Using Any HTTP Server
+1. Navigate to frontend folder
+2. Run: python -m http.server 8000
+   OR: npx http-server
+3. Open browser: http://localhost:8000
+
+STEP 4: TEST APPLICATION (10 minutes)
+--------------------------------------------------------------------------------
+
+1. Register New User
+   → Go to register.html
+   → Fill form with test data
+   → Submit
+   → Modal shows meter number (e.g., MTR-000001)
+   → Auto-redirect to login
+
+2. Login as User
+   → Use registered credentials
+   → Should see user dashboard
+   → Check profile for meter number
+
+3. Login as Admin
+   → Email: admin@electrobill.com
+   → Password: admin123
+   → Should see admin dashboard
+   → Access admin pages
+
+4. Test PDF Download
+   → Login as user
+   → Go to My Bills
+   → Click "Download" on any bill
+   → PDF should show real address, meter number (not dummy data!)
+
+================================================================================
+                    8. IMPLEMENTATION DETAILS
+================================================================================
+
+AUTO-GENERATED METER NUMBERS:
+--------------------------------------------------------------------------------
+
+How It Works:
+1. User registers via register.html
+2. Backend calls generateUniqueMeterNumber() in api.js
+3. Function queries customer_info for highest meter number
+4. Extracts numeric part using regex: /MTR-(\d+)/
+5. Increments by 1
+6. Formats as MTR-XXXXXX (zero-padded to 6 digits)
+7. Stores in customer_info with UNIQUE constraint
+8. Shows meter number in success modal
+9. Meter number displayed in profile (read-only field)
+
+Format: MTR-000001, MTR-000002, MTR-000003...
+Maximum: MTR-999999 (supports up to 999,999 customers)
+
+Location in Code:
+- Generation: frontend/assets/js/api.js → generateUniqueMeterNumber()
+- Usage: frontend/assets/js/api.js → createCustomerInfo()
+- Registration: frontend/register.html → Success modal
+- Display: frontend/profile.html → Read-only field
+- Database: customer_info.meter_number (UNIQUE, TEXT)
+
+Fallback: If query fails, uses timestamp: MTR-{Date.now()}
+
+TIERED BILL CALCULATION ALGORITHM:
+--------------------------------------------------------------------------------
+
+Implementation: frontend/assets/js/admin-add-reading.js
+
+Step-by-Step Process:
+1. Admin enters previous and current meter readings
+2. System calculates: units_consumed = current - previous
+3. Fetches active tariff plan from tariff_plans table
+4. Applies tiered pricing calculation:
+
+   let cost = base_fee;  // Fixed monthly charge
+   let remainingUnits = units_consumed;
+   
+   // Tier 1 (0-100 units)
+   if (remainingUnits > 0) {
+       tier1Units = min(remainingUnits, tier1_units_up_to);
+       cost += tier1Units × tier1_rate;
+       remainingUnits -= tier1Units;
+   }
+   
+   // Tier 2 (101-300 units)
+   if (remainingUnits > 0) {
+       tier2Limit = tier2_units_up_to - tier1_units_up_to;
+       tier2Units = min(remainingUnits, tier2Limit);
+       cost += tier2Units × tier2_rate;
+       remainingUnits -= tier2Units;
+   }
+   
+   // Tier 3 (300+ units)
+   if (remainingUnits > 0) {
+       cost += remainingUnits × tier3_rate;
+   }
+   
+   billAmount = cost;
+
+5. Creates/updates consumption record with units_consumed
+6. Creates/updates bill record with calculated amount
+7. Sets due_date to 15th of next month
+8. Status defaults to 'Pending'
+
+Example Calculation:
+- Units consumed: 250 kWh
+- Base fee: ₹50
+- Tier 1 (0-100): 100 units × ₹5.00 = ₹500
+- Tier 2 (101-300): 150 units × ₹7.50 = ₹1,125
+- Total: ₹50 + ₹500 + ₹1,125 = ₹1,675
+
+Fallback: If no tariff plan exists, uses: base_fee (₹50) + (units × ₹7)
+
+PDF DOWNLOADS WITH REAL DATA:
+--------------------------------------------------------------------------------
+
+Implementation: frontend/assets/js/bills.js → downloadBillPDF()
+
+How It Works:
+1. User clicks "Download" button on bills list (my-bills.html)
+2. JavaScript fetches bill data from bills table
+3. Fetches customer_info using API.user.getCustomerInfo(userId)
+4. Merges data into bill object with real customer information
+5. Generates professional HTML template with:
+   - Company header: "ElectroBill"
+   - Bill To section: Real customer name and address
+   - Bill Details: Bill number, issue date, due date, status
+   - Meter Readings: Previous, current, units consumed
+   - Billing Breakdown: Energy charges, fixed charges, total
+   - Footer: Thank you message and generation timestamp
+6. Uses html2pdf.js to convert HTML to PDF
+7. Downloads as bill-{billId}.pdf
+
+Real Data Included (NO DUMMY DATA):
+✅ Actual street address (from customer_info.street_address)
+✅ Actual city, state, postal (from customer_info.city, state_province, postal_code)
+✅ Actual country (from customer_info.country)
+✅ Actual meter number (from customer_info.meter_number)
+✅ Customer name (from profiles.name)
+✅ Customer ID (from user.id)
+✅ Bill details (units, amount, dates from bills table)
+✅ Calculated energy charges and fixed charges
+✅ Professional formatting with color-coded status badges
+
+Location in Code:
+- Bills List: frontend/my-bills.html
+- PDF Generation: frontend/assets/js/bills.js → downloadBillPDF()
+- HTML Template: Same file, inline HTML string (lines 145-378)
+- Data Fetch: Uses API.user.getCustomerInfo(userId)
+- Library: html2pdf.js (loaded via CDN)
+
+PDF Settings:
+- Margin: 10mm
+- Format: A4 portrait
+- Image quality: 0.98 (JPEG)
+- Scale: 2 (for better resolution)
+
+CONSUMPTION TRACKING WORKFLOW:
+--------------------------------------------------------------------------------
+
+Admin Side (add-reading.html):
+1. Admin selects customer from dropdown
+2. Enters reading month (YYYY-MM format)
+3. Enters billing month (YYYY-MM format)
+4. Enters previous meter reading (kWh)
+5. Enters current meter reading (kWh)
+6. System auto-calculates units consumed
+7. Validates: current >= previous
+8. Checks for existing reading (offers overwrite option)
+9. Inserts/updates consumption table
+10. Fetches active tariff and calculates bill amount
+11. Inserts/updates bills table
+12. Shows success message with units and amount
+
+Customer Side (dashboard.html):
+1. Fetches consumption data from consumption table
+2. Displays consumption chart (last 12 months)
+3. Shows current month consumption
+4. Displays consumption trends
+5. Links to bills for detailed breakdown
+
+Data Flow:
+consumption.units_consumed → bills.units → PDF generation
+
+AUTHENTICATION FLOW:
+--------------------------------------------------------------------------------
+
+Registration (register.html):
+1. User fills form with name, email, password, address
+2. Calls supabase.auth.signUp() with email and password
+3. Supabase Auth creates user in auth.users table
+4. Trigger handle_new_user() automatically creates profile entry
+5. Frontend calls API.user.createCustomerInfo() with address data
+6. System generates unique meter number (MTR-XXXXXX)
+7. Stores customer_info with meter number
+8. Success modal displays meter number
+9. 5-second countdown timer
+10. Auto-redirect to login.html
+
+Login (login.html):
+1. User enters email and password
+2. Calls supabase.auth.signInWithPassword()
+3. Supabase Auth validates credentials
+4. Fetches user profile from profiles table
+5. Checks role field (USER or ADMIN)
+6. If ADMIN → redirect to admin/dashboard.html
+7. If USER → redirect to dashboard.html
+8. Stores user data in localStorage
+9. Updates last_login timestamp
+
+Logout:
+1. User clicks logout button
+2. Calls supabase.auth.signOut()
+3. Clears localStorage
+4. Redirects to login.html
+
+Protected Routes:
+- Each page calls Auth.checkAuth('USER') or Auth.checkAuth('ADMIN')
+- If not authenticated → auto-redirect to login.html
+- If wrong role → redirect to appropriate dashboard
+- Uses localStorage for session persistence
+
+Session Management:
+- JWT tokens managed by Supabase Auth
+- Auto-refresh on token expiry
+- Persistent sessions across browser restarts
+- Secure httpOnly cookies (handled by Supabase)
+
+BILL STATUS MANAGEMENT:
+--------------------------------------------------------------------------------
+
+Status Values: 'Pending' or 'Paid'
+
+Update Flow:
+1. Customer views bills in my-bills.html
+2. Clicks "Pay" button for pending bill
+3. Redirects to payment.html?billId={id}
+4. Customer enters payment details
+5. On successful payment:
+   - Updates bills.status to 'Paid'
+   - Sets bills.paid_date to current date
+   - Shows success message
+6. Bill now shows green "Paid" badge
+7. "Pay" button no longer appears
+
+Admin Override:
+- Admin can manually update bill status in bills.html
+- Can mark bills as Paid or Pending
+- Can delete bills if needed
+
+TARIFF PLAN MANAGEMENT:
+--------------------------------------------------------------------------------
+
+Default Tariff: "Standard Residential Tariff"
+
+Admin Workflow (tariffs.html):
+1. Admin views current tariff rates
+2. Updates tier rates:
+   - Slab 1 (0-100 units): Rate per unit
+   - Slab 2 (101-300 units): Rate per unit
+   - Slab 3 (300+ units): Rate per unit
+3. Updates fixed charge (base fee)
+4. Sets effective date
+5. Submits form
+6. System checks if tariff exists by name
+7. If exists → updates existing tariff
+8. If not → creates new tariff
+9. Sets is_active = true
+10. All future bills use updated rates
+
+Tariff Application:
+- Bill calculation always uses most recent active tariff
+- Query: SELECT * FROM tariff_plans WHERE is_active = true ORDER BY effective_from DESC LIMIT 1
+- Supports multiple tariff categories (residential, commercial, etc.)
+- Can have multiple tariffs with different effective dates
+
+REPORTS GENERATION:
+--------------------------------------------------------------------------------
+
+Implementation: frontend/assets/js/admin-reports.js
+
+Data Preparation:
+1. On page load, fetches all bills, users, and readings
+2. Stores in REPORT_DATA cache object
+3. Normalizes bill data across different schema versions
+
+Report Types:
+
+1. Revenue Report:
+   - Groups bills by month
+   - Aggregates: total revenue, total units, fixed charges
+   - Exports as CSV or PDF
+   - PDF includes formatted table with monthly breakdown
+
+2. Outstanding Bills:
+   - Filters bills where status != 'Paid'
+   - Includes customer name, meter number, amount, due date
+   - Exports as CSV or PDF
+   - Useful for collections and follow-ups
+
+3. User Activity:
+   - Lists all users with status
+   - Shows active/inactive accounts
+   - Exports as CSV or PDF
+   - Helps track user base growth
+
+4. All Readings:
+   - Complete meter reading history
+   - Shows previous, current, and consumed units
+   - Exports as CSV or PDF
+   - Audit trail for consumption data
+
+Export Mechanisms:
+- CSV: Uses csvEscape() for proper formatting
+- PDF: Uses html2pdf.js with custom styling
+- Fallback: JSON download if PDF generation fails
+- Download function creates blob and triggers browser download
+
+================================================================================
+                    9. SECURITY & AUTHENTICATION
+================================================================================
+
+AUTHENTICATION:
+--------------------------------------------------------------------------------
+✅ Supabase Auth (Email/Password)
+✅ JWT tokens for session management
+✅ Secure password hashing (built-in)
+✅ Session persistence (localStorage)
+
+AUTHORIZATION (RLS Policies):
+--------------------------------------------------------------------------------
+
+profiles table:
+- Users: SELECT/UPDATE own profile only
+- Admins: SELECT all profiles, UPDATE own profile
+
+customer_info table:
+- Users: SELECT/UPDATE own info only
+- Admins: SELECT all customer info
+- Special: SELECT policy allows meter number generation
+
+bills table:
+- Users: SELECT own bills only
+- Admins: SELECT/INSERT/UPDATE all bills
+
+tariffs table:
+- Everyone: SELECT active tariffs
+- Admins: INSERT/UPDATE/DELETE all tariffs
+
+consumption_limits table:
+- Users: Full CRUD on own limits
+- Admins: SELECT all limits
+
+DATA VALIDATION:
+--------------------------------------------------------------------------------
+✅ Form validation on frontend
+✅ Database constraints (NOT NULL, UNIQUE, CHECK)
+✅ Foreign key relationships enforced
+✅ Type checking in API methods
+✅ Error handling with try-catch blocks
+
+BEST PRACTICES:
+--------------------------------------------------------------------------------
+✅ Never expose Supabase service key (use anon key only)
+✅ All sensitive queries protected by RLS
+✅ No SQL injection (using Supabase client)
+✅ XSS prevention (no innerHTML with user data)
+✅ CSRF protection (Supabase handles tokens)
+
+================================================================================
+                  10. IMPORTANT NOTES & MAINTENANCE
+================================================================================
+
+CRITICAL - MUST READ:
+--------------------------------------------------------------------------------
+
+1. SUPABASE CONFIGURATION
+   ⚠️ NEVER commit config.js with real credentials to public repos
+   ⚠️ Use environment variables in production
+   ⚠️ Regenerate API keys if exposed
+
+2. METER NUMBER SEQUENCE
+   ℹ️ Meter numbers are sequential and unique
+   ℹ️ Deleted users' numbers are NOT reused
+   ℹ️ Sequence continues from highest existing number
+   ℹ️ Maximum: MTR-999999 (999,999 customers)
+
+3. RLS POLICY FOR METER GENERATION
+   ⚠️ customer_info SELECT policy MUST use USING (true)
+   ⚠️ Do NOT change to USING (auth.uid() = user_id)
+   ⚠️ This is required for meter number generation during registration
+   ⚠️ Without it, registration will fail!
+
+4. PDF BROWSER CACHE
+   ℹ️ If PDFs show old data after code changes
+   ℹ️ Users must hard refresh (Ctrl+Shift+R) or clear cache
+   ℹ️ Or open in incognito mode for testing
+
+5. DEFAULT ADMIN PASSWORD
+   ⚠️ Change admin password immediately after setup!
+   ⚠️ Default: admin@electrobill.com / admin123
+   ⚠️ This is for initial setup only
+
+COMMON ISSUES & SOLUTIONS:
+--------------------------------------------------------------------------------
+
+Issue: "User already registered" during signup
+Solution: Email is already in use, try different email or login
+
+Issue: Registration successful but no redirect
+Solution: Check console for errors, verify Supabase connection
+
+Issue: PDF shows dummy data instead of real address
+Solution: Clear browser cache (Ctrl+Shift+R) and try again
+
+Issue: Admin cannot see all users
+Solution: Check RLS policies in Supabase, verify admin role in profiles
+
+Issue: Meter number not showing in PDF
+Solution: Ensure customer_info exists for user, check database
+
+Issue: "Cannot read property 'meter_number'" error
+Solution: User registered before meter number feature, manually add meter number
+
+MAINTENANCE TASKS:
+--------------------------------------------------------------------------------
+
+Daily:
+- Monitor error logs in browser console
+- Check bill payment status
+- Verify new user registrations
+
+Weekly:
+- Review database size (Supabase free tier: 500MB)
+- Check tariff rates are current
+- Monitor system performance
+
+Monthly:
+- Backup database via Supabase
+- Review and archive old bills
+- Update tariff rates if needed
+- Check for Supabase updates
+
+FUTURE ENHANCEMENTS (Optional):
+--------------------------------------------------------------------------------
+
+Suggested Features:
+📌 Email notifications for bill generation
+📌 SMS alerts for due dates
+📌 Auto-payment via payment gateway
+📌 Consumption charts with graphs
+📌 Export reports to Excel/CSV
+📌 Multi-language support
+📌 Mobile app (React Native)
+📌 Push notifications
+📌 Bill comparison year-over-year
+📌 Energy saving tips
+
+DATABASE SCALABILITY:
+--------------------------------------------------------------------------------
+
+Current Capacity:
+- Supabase Free Tier: 500MB database, 2GB bandwidth
+- Estimated: ~50,000 users with bills
+- ~500,000 bill records
+
+Scaling Options:
+- Upgrade to Supabase Pro ($25/month)
+- Implement data archiving for old bills
+- Use database partitioning for large tables
+- Add read replicas for performance
+
+BACKUP & RECOVERY:
+--------------------------------------------------------------------------------
+
+Automatic Backups (Supabase):
+- Daily automated backups included
+- 7-day retention on free tier
+- Can download via Supabase dashboard
+
+Manual Backup:
+1. Go to Supabase → Database → Backups
+2. Click "Download Database Backup"
+3. Save .sql file to safe location
+4. Store in version control or cloud storage
+
+Recovery:
+1. Create new Supabase project
+2. Run backup .sql file in SQL Editor
+3. Update config.js with new credentials
+4. Test application thoroughly
+
+CONTACT & SUPPORT:
+--------------------------------------------------------------------------------
+
+For Issues:
+- Check browser console for errors
+- Review Supabase logs in dashboard
+- Verify RLS policies are correct
+- Check this documentation first
+
+For Updates:
+- Keep Supabase client library updated
+- Monitor Tailwind CSS CDN version
+- Check html2pdf.js for updates
+- Test after any dependency updates
+
+DEPLOYMENT CHECKLIST:
+--------------------------------------------------------------------------------
+
+Before Going Live:
+□ Change default admin password
+□ Update Supabase to production instance
+□ Enable SSL/HTTPS (Supabase handles this)
+□ Test all user flows thoroughly
+□ Test all admin functions
+□ Verify PDF downloads work
+□ Check mobile responsiveness
+□ Test in multiple browsers
+□ Review RLS policies
+□ Setup error monitoring
+□ Create backup strategy
+□ Document custom changes
+□ Train admin users
+□ Prepare user guide
+
+================================================================================
+                         QUICK REFERENCE
+================================================================================
+
+START APPLICATION:
+→ Open frontend/index.html in browser via Live Server
+
+LOGIN AS ADMIN:
+→ Email: admin@electrobill.com
+→ Password: admin123
+
+LOGIN AS USER:
+→ Register new account first
+→ Use your registered credentials
+
+DOWNLOAD BILL PDF:
+→ Login as user → My Bills → Click "Download" button
+
+ADD NEW TARIFF:
+→ Login as admin → Tariffs → Fill form → Save
+
+CREATE BILL:
+→ Login as admin → Add Reading → Select user → Enter units → Submit
+
+VIEW REPORTS:
+→ Login as admin → Reports → Select date range → Generate
+
+DATABASE SCHEMA:
+→ File: clean-setup-FIXED.sql
+→ Location: Project root folder
+
+SUPABASE CONFIG:
+→ File: frontend/assets/js/config.js
+→ Update: SUPABASE_URL and SUPABASE_ANON_KEY
+
+================================================================================
+                           VERSION HISTORY
+================================================================================
+
+Version 1.0 (November 23, 2025)
+- Initial production release
+- Auto-generated meter numbers
+- PDF downloads with real customer data
+- Complete admin panel
+- User dashboard
+- Bill management
+- Payment processing
+- Profile management
+- Tariff management
+- Reports & analytics
+- Dark mode support
+- Responsive design
+- Supabase backend integration
+
+================================================================================
+                          END OF DOCUMENTATION
+================================================================================
+
+This file contains complete information about the Electricity Billing System.
+Keep this file for reference during development and maintenance.
+
+Last Updated: November 23, 2025
+Document Version: 1.0
+Project Status: Production Ready
+
+For questions or issues, refer to specific sections above.
+
+================================================================================

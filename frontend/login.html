@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ElectroBill</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+
+<body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+
+    <!-- Theme Toggle Button -->
+    <button id="themeToggle"
+        class="fixed top-4 right-4 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 hover:scale-110 transition-all duration-300 z-50">
+        <svg class="w-6 h-6 dark:hidden text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+            </path>
+        </svg>
+        <svg class="w-6 h-6 hidden dark:block text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+            </path>
+        </svg>
+    </button>
+
+    <div class="glass-card w-full max-w-md p-8 rounded-2xl shadow-2xl">
+        <div class="text-center mb-8">
+            <div
+                class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
+                E</div>
+            <h1 class="text-2xl font-bold">Welcome Back</h1>
+            <p class="text-slate-500 dark:text-slate-400">Sign in to manage your electricity account</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium mb-2">Email Address</label>
+                <input type="email" id="email" required
+                    class="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    placeholder="name@example.com">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-2">Password</label>
+                <input type="password" id="password" required
+                    class="w-full px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    placeholder="••••••••">
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span>Remember me</span>
+                </label>
+                <a href="#" class="text-blue-600 hover:text-blue-500">Forgot password?</a>
+            </div>
+
+            <button type="submit" id="loginBtn"
+                class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                <span>Sign In</span>
+                <div class="loader hidden border-white border-t-transparent w-5 h-5"></div>
+            </button>
+        </form>
+
+        <div id="errorMessage"
+            class="mt-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm text-center hidden">
+            Invalid credentials. Please try again.
+        </div>
+
+        <div class="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Don't have an account?
+            <a href="register.html" class="text-blue-600 hover:text-blue-500 font-medium">Create account</a>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Initialize theme from localStorage or system preference
+        const initTheme = () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                html.classList.add('dark');
+            }
+        };
+
+        // Toggle theme
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Initialize on page load
+        initTheme();
+    </script>
+
+    <script type="module">
+        import { Auth } from './assets/js/auth.js';
+
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const loader = loginBtn.querySelector('.loader');
+        const btnText = loginBtn.querySelector('span');
+
+        window.fillCreds = (email, pass) => {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = pass;
+        };
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // UI Loading State
+            loginBtn.disabled = true;
+            loader.classList.remove('hidden');
+            btnText.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+
+            try {
+                const user = await Auth.login(email, password);
+                console.log('✅ Login successful! User object:', user);
+                console.log('📧 Email:', user.email);
+                console.log('👤 Name:', user.name);
+                console.log('🔑 Role:', user.role);
+                console.log('🔍 Role type:', typeof user.role);
+
+                // Use the authoritative session user (stored by Auth.login) to decide redirect
+                const sessionUser = Auth.getUser();
+                console.log('📦 Session user after login:', sessionUser);
+                const finalRole = (sessionUser?.role || user.role || 'USER').toString().trim().toUpperCase();
+                console.log('🔁 Final normalized role used for redirect:', finalRole);
+
+                if (finalRole === 'ADMIN') {
+                    console.log('🚀 Redirecting to ADMIN dashboard at: admin/dashboard.html');
+                    window.location.href = 'admin/dashboard.html';
+                } else {
+                    console.log('🚀 Redirecting to USER dashboard at: dashboard.html');
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                errorMessage.textContent = error.message || 'Login failed';
+                errorMessage.classList.remove('hidden');
+                loginBtn.disabled = false;
+                loader.classList.add('hidden');
+                btnText.classList.remove('hidden');
+            }
+        });
+    </script>
+    <script>
+        // DEV DEBUG PANEL - only enabled for localhost or file protocol
+        (function () {
+            try {
+                const host = window.location.hostname || '';
+                if (host.includes('localhost') || host.includes('127.') || window.location.protocol === 'file:') {
+                    const panel = document.createElement('div');
+                    panel.id = 'debugAuthPanel';
+                    panel.style.position = 'fixed';
+                    panel.style.right = '12px';
+                    panel.style.bottom = '12px';
+                    panel.style.zIndex = 99999;
+                    panel.style.background = 'rgba(0,0,0,0.7)';
+                    panel.style.color = 'white';
+                    panel.style.padding = '8px 12px';
+                    panel.style.borderRadius = '8px';
+                    panel.style.fontSize = '12px';
+                    panel.style.maxWidth = '320px';
+                    panel.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)';
+                    panel.innerText = 'Auth debug: initializing...';
+                    document.body.appendChild(panel);
+
+                    const updatePanel = () => {
+                        try {
+                            const userStr = sessionStorage.getItem('ebs_user');
+                            const token = sessionStorage.getItem('ebs_token');
+                            const parsed = userStr ? JSON.parse(userStr) : null;
+                            panel.innerText = `sessionUser: ${userStr ? JSON.stringify(parsed, null, 0) : 'null'}\ntoken: ${token ? token.substring(0, 12) + '...' : 'null'}`;
+                        } catch (e) {
+                            panel.innerText = 'Auth debug: cannot read session storage';
+                        }
+                    };
+
+                    setInterval(updatePanel, 1000);
+                }
+            } catch (e) {
+                // ignore
+            }
+        })();
+    </script>
+</body>
+
+</html>
