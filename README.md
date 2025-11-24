@@ -5,7 +5,7 @@
   <br />
   <img src="https://cdn-icons-png.flaticon.com/512/2933/2933116.png" alt="Logo" width="80" height="80">
 
-  <h1 style="font-size: 3rem; font-weight: bold; margin-top: 0;">⚡ ElectroBill</h1>
+  <h1 style="font-size: 3rem; font-weight: bold; margin-top: 0;">⚡ Electricity Billing System</h1>
 
   <p style="font-size: 1.2rem; color: #555;">
     <b>The Next-Gen Electricity Billing System</b>
@@ -48,10 +48,10 @@
 
 ## 🚀 Overview
 
-**ElectroBill** is a robust, vanilla JavaScript application powered by **Supabase**. It bridges the gap between utility providers and consumers, offering a seamless interface for tracking consumption, managing tariffs, and processing payments securely.
+**Electricity Billing System** is a robust, vanilla JavaScript application powered by **Supabase**. It bridges the gap between utility providers and consumers, offering a seamless interface for tracking consumption, managing tariffs, and processing payments securely.
 
-> **Why ElectroBill?**
-> Unlike legacy systems, ElectroBill operates in **real-time** with Row Level Security (RLS), ensuring data privacy while delivering instant analytics.
+> **Why Electricity Billing System?**
+> Unlike legacy systems, Electricity Billing System operates in **real-time** with Row Level Security (RLS), ensuring data privacy while delivering instant analytics.
 
 ---
 
@@ -278,7 +278,7 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 </p>
 
 <p style="font-size: 0.8rem; color: #888;">
-  © 2025 ElectroBill System. All Rights Reserved.
+  © 2025 Electricity Billing System. All Rights Reserved.
 </p>
 
 </div>
